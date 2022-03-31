@@ -1,0 +1,58 @@
+trigger:
+- none
+
+pool:
+  vmImage: 'macos-latest'
+variables:
+  - group: ios-var
+steps:
+- task: InstallAppleCertificate@2
+  inputs:
+   certSecureFile: '$(P12FILE)'
+   certPwd: '$(P12PASSWORD)'
+   keychain: 'temp'
+   deleteCert: true  
+- task: InstallAppleProvisioningProfile@1
+  inputs:
+   provisioningProfileLocation: 'secureFiles'
+   provProfileSecureFile: '$(MPROVISION)'
+   removeProfile: true
+- script: yarn install
+  displayName: yarn install
+- task: CocoaPods@0
+  inputs:
+    projectDirectory: 'ios'
+- task: DownloadSecureFile@1
+  name: caCertificate
+  displayName: 'Download CA certificate'
+  inputs:
+    secureFile: '$(MPROVISION)'
+- script: |
+    fastlane  feature
+  displayName: fastlane build ipa
+  workingDirectory: 'ios'
+  env: 
+    FILEPATH: '$(caCertificate.secureFilePath)'
+# - task: Xcode@5
+#   inputs:
+#     actions: 'build'
+#     scheme: 'DavyTestAppp'
+#     sdk: '$(sdk)'
+#     configuration: '$(configuration)'
+#     xcWorkspacePath: '**/*.xcworkspace'
+#     xcodeVersion: 'default'
+#     packageApp: true
+#     signingOption: 'manual'
+#     signingIdentity: '$(APPLE_CERTIFICATE_SIGNING_IDENTITY)'
+#     provisioningProfileUuid: '$(APPLE_PROV_PROFILE_UUID)'
+#     args: '-xcconfig "./ios/Configure/Release.xcconfig"'
+- task: CopyFiles@2
+  inputs:
+    contents: '**/*.ipa'
+    targetFolder: '$(build.artifactStagingDirectory)'
+    overWrite: true
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(build.artifactStagingDirectory)' 
+    artifactName: 'Release' 
+    publishLocation: 'Container'

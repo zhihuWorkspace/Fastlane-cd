@@ -1,0 +1,5 @@
+configuration("Release")
+export_method("development")
+# clean(true)
+
+output_directory("./build")    # store the ipa in this folder

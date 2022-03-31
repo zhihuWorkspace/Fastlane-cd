@@ -1,0 +1,42 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "[Manually trigger] deploy steps to appcenter"
+  lane :feature do
+    update_project_provisioning(
+      profile: ENV["FILEPATH"],
+    )
+    update_app_identifier(
+      plist_path: "gcspa/Info.plist", # Path to info plist file, relative to xcodeproj
+      app_identifier: ENV["APP_IDENTIFIER"] # The App Identifier
+    )
+    # // bump version
+    increment_version_number(
+      version_number: "1.2.4"
+    )
+    gym(
+      export_options: {
+        provisioningProfiles: { 
+          ENV["APP_IDENTIFIER"] => ENV["APPLE_PROV_PROFILE_UUID"],
+        },
+        signingCertificate: ENV["APPLE_CERTIFICATE_SIGNING_IDENTITY"],
+      }
+    )
+  end
+
+  lane :feature_codePush do
+    puts "Building iOS feature branch"
+    # add actions here: https://docs.fastlane.tools/actions
+  end
+
+  desc "Description of what the lane does"
+  lane :beta do
+    puts "------------》"
+    puts ENV["FILEPATH"]
+  end
+
+  lane :production do
+    puts "Building iOS feature branch"
+    # add actions here: https://docs.fastlane.tools/actions
+  end
+end
